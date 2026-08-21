@@ -25,14 +25,17 @@ class NotificationService:
                 TEMPLATE_FOLDER=TEMPLATE_DIR,
             )
         )
-        async_http_client = AsyncTwilioHttpClient()
+        self._twilio_client = None
 
-        self.twilio_client = Client(
-            notification_settings.TWILIO_SID,
-            notification_settings.TWILIO_AUTH_TOKEN,
-            http_client=async_http_client
-        )
-
+    @property
+    def twilio_client(self) -> Client:
+        if self._twilio_client is None:
+            self._twilio_client = Client(
+                notification_settings.TWILIO_SID,
+                notification_settings.TWILIO_AUTH_TOKEN,
+                http_client=AsyncTwilioHttpClient(),
+            )
+        return self._twilio_client
 
     async def send_email(
         self,
@@ -79,9 +82,9 @@ class NotificationService:
         )
 
     async def send_sms(self, to: str, body: str):
-        await self.twilio_client.messages.create_async(
+        self.tasks.add_task(
+            self.twilio_client.messages.create_async,
             from_=notification_settings.TWILIO_NUMBER,
             to=to,
-            body=body
+            body=body,
         )
-    

@@ -80,14 +80,14 @@ class ShipmentEventService(BaseService[ShipmentEvent]):
                 code = randint(100_000, 999_999)
                 await add_shipment_verification_code(shipment.id, code)
 
-                if shipment.client_contact_phone:
-                    await self.notification_service.send_sms(
-                        to=shipment.client_contact_phone,
-                        body=f"Your order is arriving soon! Share the {code} code with your"
-                        "delivery executive to recieve your package."
-                    )
-                else:
-                    context["verification_code"] = str(code)
+                # if shipment.client_contact_phone:
+                #     await self.notification_service.send_sms(
+                #         to=shipment.client_contact_phone,
+                #         body=f"Your order is arriving soon! Share the {code} code with your"
+                #         "delivery executive to recieve your package."
+                #     )
+                # else:
+                context["verification_code"] = str(code)
 
             case ShipmentStatus.delivered:
                 subject = "Your Order is Delivered ✅"
