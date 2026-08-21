@@ -1,0 +1,18 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Environment Variables & Secrets (Prevents committing Twilio/DB secrets)
+.env
+*.env
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# IDE settings
+.vscode/
+.idea/
