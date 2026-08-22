@@ -2,10 +2,12 @@ from random import randint
 
 from fastapi import BackgroundTasks
 
+from app.config import app_settings
 from app.database.models import Shipment, ShipmentEvent, ShipmentStatus
 from app.database.redis import add_shipment_verification_code
 from app.services.base import BaseService
 from app.services.notification import NotificationService
+from app.utils import generate_url_safe_token
 
 
 class ShipmentEventService(BaseService[ShipmentEvent]):
@@ -91,6 +93,9 @@ class ShipmentEventService(BaseService[ShipmentEvent]):
 
             case ShipmentStatus.delivered:
                 subject = "Your Order is Delivered ✅"
+                context["seller"] = shipment.seller.name
+                token = generate_url_safe_token({"id": str(shipment.id)}, salt="shipment-review")
+                context["review_url"] = f"http://{app_settings.APP_DOMAIN}/shipment/review?token={token}"
                 template_name = "mail_delivered.html"
 
             case ShipmentStatus.cancelled:
