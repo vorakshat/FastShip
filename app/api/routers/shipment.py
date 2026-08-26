@@ -8,7 +8,6 @@ from app.api.dependencies import DeliveryPartnerDep, SellerDep, ShipmentServiceD
 from app.api.schemas.shipment import (
     ShipmentCreate,
     ShipmentRead,
-    ShipmentReview,
     ShipmentUpdate,
 )
 from app.config import app_settings

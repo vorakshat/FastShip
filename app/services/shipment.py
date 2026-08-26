@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.shipment import ShipmentCreate, ShipmentReview, ShipmentUpdate
+from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
 from app.database.models import (
     DeliveryPartner,
     Review,

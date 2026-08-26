@@ -1,4 +1,3 @@
-from fastapi import BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.seller import SellerCreate
@@ -8,9 +7,9 @@ from .user import UserService
 
 
 class SellerService(UserService[Seller]):
-    def __init__(self, session: AsyncSession, tasks: BackgroundTasks):
+    def __init__(self, session: AsyncSession):
         # Get database session to perform database operations
-        super().__init__(Seller, session, tasks)
+        super().__init__(Seller, session)
 
     async def add(self, seller_create: SellerCreate) -> Seller:
         return await self._add_user(seller_create.model_dump(), router_prefix="seller")

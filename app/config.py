@@ -33,6 +33,9 @@ class DatabaseSettings(BaseSettings):
         password = quote_plus(self.POSTGRES_PASSWORD)
         return f"postgresql+asyncpg://{user}:{password}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
+    def REDIS_URL(self, db):
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{db}"
+
 class SecuritySettings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str

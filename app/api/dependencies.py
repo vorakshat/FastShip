@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import BackgroundTasks, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import oauth2_scheme_partner, oauth2_scheme_seller
@@ -91,20 +91,20 @@ DeliveryPartnerDep = Annotated[DeliveryPartner, Depends(get_current_partner)]
 
 
 ### Service Dependencies will help us to avail services provided by the files in Serive folder by returning an instance of their respective classes
-def get_shipment_service(session: SessionDep, tasks: BackgroundTasks):
+def get_shipment_service(session: SessionDep):
     return ShipmentService(
         session,
-        DeliveryPartnerService(session, tasks),
-        ShipmentEventService(session, tasks)
+        DeliveryPartnerService(session),
+        ShipmentEventService(session)
     )
 
 
-def get_seller_service(session: SessionDep, tasks: BackgroundTasks):
-    return SellerService(session, tasks)
+def get_seller_service(session: SessionDep):
+    return SellerService(session)
 
 
-def get_delivery_partner_service(session: SessionDep, tasks: BackgroundTasks):
-    return DeliveryPartnerService(session, tasks)
+def get_delivery_partner_service(session: SessionDep):
+    return DeliveryPartnerService(session)
 
 
 ShipmentServiceDep = Annotated[ShipmentService, Depends(get_shipment_service)]

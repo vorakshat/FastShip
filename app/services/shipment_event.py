@@ -1,19 +1,16 @@
 from random import randint
 
-from fastapi import BackgroundTasks
-
 from app.config import app_settings
 from app.database.models import Shipment, ShipmentEvent, ShipmentStatus
 from app.database.redis import add_shipment_verification_code
 from app.services.base import BaseService
-from app.services.notification import NotificationService
 from app.utils import generate_url_safe_token
+from app.worker.tasks import send_sms, send_email_with_template
 
 
 class ShipmentEventService(BaseService[ShipmentEvent]):
-    def __init__(self, session, tasks: BackgroundTasks):
+    def __init__(self, session):
         super().__init__(ShipmentEvent, session)
-        self.notification_service = NotificationService(tasks)
 
     async def add(
         self,
@@ -83,7 +80,7 @@ class ShipmentEventService(BaseService[ShipmentEvent]):
                 await add_shipment_verification_code(shipment.id, code)
 
                 # if shipment.client_contact_phone:
-                #     await self.notification_service.send_sms(
+                #     send_sms(
                 #         to=shipment.client_contact_phone,
                 #         body=f"Your order is arriving soon! Share the {code} code with your"
                 #         "delivery executive to recieve your package."
@@ -102,7 +99,7 @@ class ShipmentEventService(BaseService[ShipmentEvent]):
                 subject = "Your Order is Cancelled ❌"
                 template_name = "mail_delivered.html"
 
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[shipment.client_contact_email],
             subject=subject,
             context=context,
