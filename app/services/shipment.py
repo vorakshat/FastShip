@@ -1,16 +1,17 @@
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
+from app.core.exceptions import ClientNotAuthorized, EntityNotFoundError
 from app.database.models import (
     DeliveryPartner,
     Review,
     Seller,
     Shipment,
     ShipmentStatus,
+    TagName,
 )
 from app.database.redis import get_shipment_verification_code
 from app.services.shipment_event import ShipmentEventService
@@ -35,10 +36,7 @@ class ShipmentService(BaseService[Shipment]):
         shipment = await self._get(id)
 
         if shipment is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Shipment with given id doesn't exist",
-            )
+            raise EntityNotFoundError()
         return shipment
 
     async def add(self, shipment: ShipmentCreate, seller: Seller) -> Shipment:
@@ -73,19 +71,13 @@ class ShipmentService(BaseService[Shipment]):
 
         #Validate logged in partner with the assigned partner
         if shipment.delivery_partner_id != partner.id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Delivery partner not authorized"
-            )
+            raise ClientNotAuthorized()
 
         if shipment_update.status == ShipmentStatus.delivered:
             code = await get_shipment_verification_code(shipment.id)
 
             if code != shipment_update.verification_code:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Client not authorized"
-                )
+                raise ClientNotAuthorized()
 
         updates = shipment_update.model_dump(
             exclude_none=True,
@@ -111,10 +103,7 @@ class ShipmentService(BaseService[Shipment]):
         
         #Validate logged in partner with the assigned partner
         if shipment.seller_id != seller.id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Seller not authorized"
-            )
+            raise ClientNotAuthorized()
 
         event = await self.event_service.add(
             shipment=shipment,
@@ -128,10 +117,7 @@ class ShipmentService(BaseService[Shipment]):
         token_data = decode_url_safe_token(token=token, salt="shipment-review")
 
         if not token_data:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not Authorized"
-            )
+            raise ClientNotAuthorized()
 
         shipment = await self.get(UUID(token_data["id"]))
 
@@ -143,3 +129,18 @@ class ShipmentService(BaseService[Shipment]):
 
         self.session.add(new_review)
         await self.session.commit()
+
+    async def add_tag(self, id: UUID, tag_name: TagName):
+        shipment = await self.get(id)
+        shipment.tags.append(await tag_name.tag(self.session))
+
+        return await self._update(shipment)
+
+    async def remove_tag(self, id: UUID, tag_name: TagName):
+        shipment = await self.get(id)
+        try:
+            shipment.tags.remove(await tag_name.tag(self.session))
+        except ValueError:
+            raise EntityNotFoundError()
+
+        return await self._update(shipment)

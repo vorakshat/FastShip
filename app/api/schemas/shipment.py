@@ -3,13 +3,17 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.database.models import ShipmentEvent, ShipmentStatus
+from app.database.models import ShipmentEvent, ShipmentStatus, TagName
 
 
 class BaseShipment(BaseModel):
     content: str 
     weight: float = Field(le=25, gt=0)
     destination: int
+
+class TagRead(BaseModel):
+    name: TagName 
+    instruction: str
 
 class ShipmentRead(BaseShipment):
     id: UUID
@@ -18,6 +22,7 @@ class ShipmentRead(BaseShipment):
     delivery_partner_id: UUID
     timeline: list[ShipmentEvent]
     estimated_delivery: datetime
+    tags: list[TagRead]
 
 class ShipmentCreate(BaseShipment):
     client_contact_email: EmailStr

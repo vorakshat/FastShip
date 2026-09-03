@@ -2,13 +2,18 @@ from datetime import timedelta
 from typing import Generic, TypeVar
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from passlib.context import CryptContext  # type: ignore
 from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import app_settings
+from app.core.exceptions import (
+    BadCredentials,
+    ClientNotAuthorized,
+    ClientNotVerified,
+    InvalidToken,
+)
 from app.database.models import User
 from app.utils import (
     decode_url_safe_token,
@@ -60,18 +65,12 @@ class UserService(BaseService[UserType], Generic[UserType]):
         token_data = decode_url_safe_token(token, expiry=timedelta(days=1), salt="email-verify")
 
         if not token_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token"
-            )
+            raise InvalidToken()
 
         user = await self._get(UUID(token_data["id"]))
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid User"
-            )
+            raise ClientNotAuthorized()
 
         user.email_verified = True
 
@@ -89,16 +88,10 @@ class UserService(BaseService[UserType], Generic[UserType]):
         if user is None or not password_context.verify(
             password, user.password_hash
         ):
-            raise HTTPException(    
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Email or password is incorrect",
-            )
+            raise BadCredentials()
 
         if not user.email_verified:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email not verified",
-            )
+            raise ClientNotVerified()
         # seller validated
         # JWT structure -> encoded header.payload.signature, header is basically the algo which we r using, payload can be some user data and signature is the key
         # Note that the token is encoded and not encrypted
@@ -117,10 +110,7 @@ class UserService(BaseService[UserType], Generic[UserType]):
         user = await self._get_by_email(email)
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User with provided email not found"
-            )
+            raise ClientNotAuthorized()
 
         token = generate_url_safe_token({"id": str(getattr(user, "id"))}, salt="password-reset")  # noqa: B009
 

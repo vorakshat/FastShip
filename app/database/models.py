@@ -3,10 +3,28 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
-from sqlalchemy import ARRAY, INTEGER, table
+from sqlalchemy import ARRAY, INTEGER
 from sqlalchemy.dialects import postgresql
-from sqlmodel import Column, Field, Relationship, SQLModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Column, Field, Relationship, SQLModel, select
 
+
+class TagName(str, Enum):
+    EXPRESS = "expess"
+    STANDARD = "standard"
+    FRAGILE = "fragile"
+    HEAVY = "heavy"
+    INTERNATIONAL = "international"
+    DOMESTIC = "domestic"
+    TEMPERATURE_CONTROLLED = "temperature_controlled"
+    GIFT = "gift"
+    RETURN = "return"
+    DOCUMENTS = "documents"
+
+    async def tag(self, session: AsyncSession):
+        return await session.scalar(
+            select(Tag).where(Tag.name == self.value)
+        )
 
 class ShipmentStatus(str, Enum):
     placed = "placed"
@@ -14,6 +32,64 @@ class ShipmentStatus(str, Enum):
     out_for_delivery = "out_for_delivery"
     delivered = "delivered"
     cancelled = "cancelled"
+
+class ShipmentTag(SQLModel, table=True):
+    __tablename__="shipment_tag"
+
+    shipment_id: UUID = Field(
+        foreign_key="shipment.id",
+        primary_key=True
+    )
+    tag_id: UUID = Field(
+        foreign_key="tag.id",
+        primary_key=True
+    )
+
+class Tag(SQLModel, table=True):
+    __tablename__="tag"
+
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            default=uuid4,
+            primary_key=True
+        )
+    )
+    name: TagName
+    instruction: str
+
+    shipments: list["Shipment"] = Relationship(
+        back_populates="tags",
+        link_model=ShipmentTag,
+        sa_relationship_kwargs={"lazy": "immediate"}
+    )
+
+class Order(SQLModel, table=True):
+    shipment_id: UUID = Field(foreign_key="shipment.id", primary_key=True)
+    product_id: UUID = Field(foreign_key="product.id", primary_key=True)
+
+    created_at: datetime
+    quantity: int
+
+    shipment: "Shipment" = Relationship(back_populates="orders")
+    product: "Product" = Relationship(back_populates="orders")
+
+class Product(SQLModel, table=True):
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            default=uuid4,
+            primary_key=True
+        )
+    )
+    title: str
+    description: str
+    price: float
+    weight: float
+
+    orders: list[Order] = Relationship(
+        back_populates="product"
+    )
 
 class Shipment(SQLModel, table=True):
     # Provide table name (defualt: class name)
@@ -41,6 +117,10 @@ class Shipment(SQLModel, table=True):
     destination: int
     estimated_delivery: datetime
 
+    orders: list[Order] = Relationship(
+        back_populates="shipments"
+    )
+
     timeline: list["ShipmentEvent"] = Relationship(
         back_populates="shipment",
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"}
@@ -63,10 +143,15 @@ class Shipment(SQLModel, table=True):
         sa_relationship_kwargs={"lazy": "selectin"}
     )
 
+    tags: list[Tag] = Relationship(
+        back_populates="shipments",
+        link_model=ShipmentTag,
+        sa_relationship_kwargs={"lazy": "immediate"}
+    )
+
     @property
     def status(self):
         return self.timeline[-1].status if len(self.timeline) > 0 else None
-
 
 class ShipmentEvent(SQLModel, table=True):
     __tablename__="shipment_event"
