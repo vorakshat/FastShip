@@ -362,7 +362,7 @@ app/
 
 **On Windows (PowerShell):**
 ```powershell
-git clone https://github.com/akshatVora-hub/FastShip.git
+git clone https://github.com/vorakshat/FastShip.git
 cd FastShip
 python -m venv venv
 .\venv\Scripts\Activate.ps1
@@ -370,7 +370,7 @@ python -m venv venv
 
 **On Linux / macOS (Bash):**
 ```bash
-git clone https://github.com/akshatVora-hub/FastShip.git
+git clone https://github.com/vorakshat/FastShip.git
 cd FastShip
 python3 -m venv venv
 source venv/bin/activate
