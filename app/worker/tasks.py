@@ -38,6 +38,12 @@ fast_mail = FastMail(
 
 send_message = async_to_sync(fast_mail.send_message)
 
+# Append new lines in the log file
+@app.task
+def add_log(log: str) -> None:
+    with open("file.log", "a") as file:
+        file.write(f"{log}\n")
+
 @app.task
 def send_mail(
     recipients: list[EmailStr],

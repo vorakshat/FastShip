@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
-from app.core.exceptions import ClientNotAuthorized, EntityNotFoundError
+from app.core.exceptions import ClientNotAuthorized, EntityNotFound
 from app.database.models import (
     DeliveryPartner,
     Review,
@@ -36,7 +36,7 @@ class ShipmentService(BaseService[Shipment]):
         shipment = await self._get(id)
 
         if shipment is None:
-            raise EntityNotFoundError()
+            raise EntityNotFound()
         return shipment
 
     async def add(self, shipment: ShipmentCreate, seller: Seller) -> Shipment:
@@ -141,6 +141,6 @@ class ShipmentService(BaseService[Shipment]):
         try:
             shipment.tags.remove(await tag_name.tag(self.session))
         except ValueError:
-            raise EntityNotFoundError()
+            raise EntityNotFound()
 
         return await self._update(shipment)

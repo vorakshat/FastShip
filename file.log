@@ -1,0 +1,17 @@
+GET http://localhost:8000/docs (200) 0.0 s
+GET http://localhost:8000/openapi.json (200) 0.17 s
+GET http://localhost:8000/scalar (200) 0.01 s
+GET http://localhost:8000/openapi.json (200) 0.0 s
+GET http://localhost:8000/docs (200) 0.0 s
+GET http://localhost:8000/openapi.json (200) 0.0 s
+GET http://localhost:8000/.well-known/appspecific/com.chrome.devtools.json (404) 0.0 s
+GET http://localhost:8000/docs (200) 0.0 s
+GET http://localhost:8000/.well-known/appspecific/com.chrome.devtools.json (404) 0.0 s
+GET http://localhost:8000/openapi.json (200) 0.0 s
+GET http://localhost:8000/docs (200) 0.0 s
+GET http://localhost:8000/.well-known/appspecific/com.chrome.devtools.json (404) 0.0 s
+GET http://localhost:8000/openapi.json (200) 0.0 s
+GET http://localhost:8000/scalar (200) 0.06 s
+GET http://localhost:8000/openapi.json (200) 0.16 s
+GET http://localhost:8000/test (200) 0.0 s
+GET http://localhost:8000/favicon.ico (200) 0.0 s
