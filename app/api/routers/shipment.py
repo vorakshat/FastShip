@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, Request, status
 from fastapi.templating import Jinja2Templates
 
 from app.api.dependencies import (
@@ -15,12 +15,13 @@ from app.api.schemas.shipment import (
     ShipmentRead,
     ShipmentUpdate,
 )
+from app.api.tag import APITag
 from app.config import app_settings
 from app.core.exceptions import NothingToUpdate
 from app.database.models import Shipment, TagName
 from app.utils import TEMPLATE_DIR
 
-router = APIRouter(prefix="/shipment", tags=["Shipment"])
+router = APIRouter(prefix="/shipment", tags=[APITag.SHIPMENT])
 
 
 @router.get("/", response_model=ShipmentRead) 
@@ -29,7 +30,8 @@ async def get_shipment(id: UUID, _: SellerDep, service: ShipmentServiceDep):    
 
 templates = Jinja2Templates(TEMPLATE_DIR)
 
-@router.get("/track")
+### Tracking details of shipment
+@router.get("/track", include_in_schema=False)
 async def get_tracking(request: Request ,id: UUID, service: ShipmentServiceDep):
     # Check for shipment with given id
     shipment = await service.get(id)
@@ -46,7 +48,13 @@ async def get_tracking(request: Request ,id: UUID, service: ShipmentServiceDep):
         context=context
     )
 
-@router.post("/")
+@router.post(
+    "/", 
+    response_model=ShipmentRead, 
+    name="Create Shipment",
+    description="Submit a new **shipment**",
+    status_code=status.HTTP_201_CREATED
+)
 async def submit_shipment(seller: SellerDep, shipment: ShipmentCreate, service: ShipmentServiceDep) -> Shipment:    # seller  is the authorized seller
     return await service.add(shipment, seller)
 

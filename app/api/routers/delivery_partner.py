@@ -13,10 +13,11 @@ from app.api.schemas.delivery_partner import (
     DeliveryPartnerRead,
     DeliveryPartnerUpdate,
 )
+from app.api.tag import APITag
 from app.database.models import DeliveryPartner
 from app.database.redis import add_jti_to_blacklist
 
-router = APIRouter(prefix="/partner", tags=["Delivery Partner"])
+router = APIRouter(prefix="/partner", tags=[APITag.PARTNER])
 
 ### Register a delivery partner
 @router.post("/signup", response_model=DeliveryPartnerRead)
