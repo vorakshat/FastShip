@@ -19,3 +19,14 @@ GET http://localhost:8000/docs (200) 0.03 s
 GET http://localhost:8000/openapi.json (200) 0.16 s
 GET http://localhost:8000/docs (200) 0.07 s
 GET http://localhost:8000/openapi.json (200) 0.23 s
+GET http://127.0.0.1:8000/ (404) 0.07 s
+GET http://127.0.0.1:8000/favicon.ico (200) 0.01 s
+GET http://127.0.0.1:8000/ (404) 0.0 s
+GET http://127.0.0.1:8000/ (404) 0.0 s
+GET http://127.0.0.1:8000/ (404) 0.0 s
+GET http://127.0.0.1:8000/ (404) 0.0 s
+GET http://127.0.0.1:8000/docs (200) 0.0 s
+GET http://127.0.0.1:8000/openapi.json (200) 0.21 s
+GET http://localhost:8000/docs (200) 0.0 s
+GET http://localhost:8000/openapi.json (200) 0.0 s
+GET http://localhost:8000/favicon.ico (200) 0.0 s

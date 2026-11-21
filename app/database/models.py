@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Column, Field, Relationship, SQLModel, select
 
 
-class TagName(str, Enum):
-    EXPRESS = "expess"
+class TagName(str, Enum):   # Enum as strings representing tags, a helper function 
+    EXPRESS = "express"
     STANDARD = "standard"
     FRAGILE = "fragile"
     HEAVY = "heavy"
@@ -26,7 +26,7 @@ class TagName(str, Enum):
             select(Tag).where(Tag.name == self.value)
         )
 
-class ShipmentStatus(str, Enum):
+class ShipmentStatus(str, Enum):    # Enum as strings, can be excessed as ShipmentStatus.placed, not a database table
     placed = "placed"
     in_transit = "in_transit"
     out_for_delivery = "out_for_delivery"
@@ -68,7 +68,12 @@ class Order(SQLModel, table=True):
     shipment_id: UUID = Field(foreign_key="shipment.id", primary_key=True)
     product_id: UUID = Field(foreign_key="product.id", primary_key=True)
 
-    created_at: datetime
+    created_at: datetime = Field(
+        sa_column=Column(
+            postgresql.TIMESTAMP,
+            default=datetime.now  
+        )
+    )
     quantity: int
 
     shipment: "Shipment" = Relationship(back_populates="orders")
@@ -118,12 +123,12 @@ class Shipment(SQLModel, table=True):
     estimated_delivery: datetime
 
     orders: list[Order] = Relationship(
-        back_populates="shipments"
+        back_populates="shipment"
     )
 
     timeline: list["ShipmentEvent"] = Relationship(
         back_populates="shipment",
-        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"}
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan", "order_by": "ShipmentEvent.created_at"}
     )
 
     seller_id: UUID = Field(foreign_key="seller.id")  
@@ -189,6 +194,13 @@ class User(SQLModel):
     email_verified: bool = Field(default=False)
     password_hash: str = Field(exclude=True)    # Will be excluded from model_dump()
 
+    created_at: datetime = Field(
+        sa_column=Column(
+            postgresql.TIMESTAMP,
+            default=datetime.now
+        )
+    )   
+
 class Seller(User, table=True):
     __tablename__="seller"
 
@@ -197,12 +209,6 @@ class Seller(User, table=True):
             postgresql.UUID,
             default=uuid4,
             primary_key=True
-        )
-    )
-    created_at: datetime = Field(
-        sa_column=Column(
-            postgresql.TIMESTAMP,
-            default=datetime.now  
         )
     )
 
@@ -224,12 +230,6 @@ class DeliveryPartner(User, table=True):
             primary_key=True
         )
     )
-    created_at: datetime = Field(
-        sa_column=Column(
-            postgresql.TIMESTAMP,
-            default=datetime.now
-        )
-    )
 
     serviceable_zip_codes: list[int] = Field(
         sa_column=Column(ARRAY(INTEGER)),
@@ -247,7 +247,7 @@ class DeliveryPartner(User, table=True):
             shipment 
             for shipment in self.shipments
             if shipment.status != ShipmentStatus.delivered
-            or shipment.status != ShipmentStatus.cancelled
+            and shipment.status != ShipmentStatus.cancelled
         ]
     
     @property   # For Delivery Partners
